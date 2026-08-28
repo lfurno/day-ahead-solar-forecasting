@@ -346,3 +346,76 @@ share/tabm
 
 Use *--seed* to change the random seed and *--threads* to control the number
 of CPU threads used by PyTorch.
+
+## 7. Results
+
+The default TabM configuration was evaluated with a final dataset covering
+January 2025 through June 2026. January through June 2026 are used as separate
+forecast months. The aggregate and monthly results use the default seed 42. The
+main evaluation window covers local hours from 06:00 through 20:59.
+
+| Evaluation period | R² | RMSE (GW) | MAE (GW) | MBE (GW) | WAPE |
+|---|---:|---:|---:|---:|---:|
+| Local hours 06:00–20:59 | 0.9778 | 0.8833 | 0.5531 | 0.0273 | 8.11% |
+| All hours | 0.9851 | 0.6986 | 0.3534 | 0.0240 | 8.28% |
+
+The same configuration was also evaluated with two additional seeds:
+
+| Seed | R² | RMSE (GW) | MAE (GW) | MBE (GW) | WAPE |
+|---:|---:|---:|---:|---:|---:|
+| 42 | 0.9778 | 0.8833 | 0.5531 | 0.0273 | 8.11% |
+| 123 | 0.9793 | 0.8520 | 0.5482 | -0.0069 | 8.03% |
+| 127 | 0.9783 | 0.8734 | 0.5581 | -0.0159 | 8.18% |
+
+Monthly results for the default seed 42 and the main evaluation window:
+
+| Forecast month | Best epoch | RMSE (GW) | MAE (GW) | MBE (GW) | WAPE |
+|---|---:|---:|---:|---:|---:|
+| 2026-01 | 38 | 0.5717 | 0.3122 | 0.0707 | 11.38% |
+| 2026-02 | 27 | 0.9615 | 0.6280 | -0.5300 | 13.34% |
+| 2026-03 | 4 | 0.9427 | 0.6073 | -0.0723 | 9.84% |
+| 2026-04 | 8 | 1.0438 | 0.6441 | 0.3073 | 7.82% |
+| 2026-05 | 11 | 0.9839 | 0.6607 | 0.2181 | 7.46% |
+| 2026-06 | 7 | 0.6842 | 0.4580 | 0.1314 | 4.62% |
+
+The all-hours RMSE and MAE are lower partly because nighttime generation is
+usually zero. The fixed 06:00–20:59 window is therefore the main comparison.
+
+The monthly results show that RMSE and WAPE provide complementary information.
+RMSE is highest during spring, when PV generation is generally higher. WAPE is
+highest in February and then decreases from 13.34% to 4.62% in June. This shows
+that a higher RMSE does not necessarily correspond to a higher WAPE.
+
+The aggregate MBE is small, but the monthly MBE changes sign. February has the
+largest negative MBE, indicating underprediction, while most other months have
+a positive MBE. The small aggregate MBE therefore partly results from monthly
+values of opposite sign cancelling each other.
+
+Using the same model settings with training data starting in 2024 increased
+RMSE, MAE, and WAPE. The shorter history starting in 2025 was therefore retained
+because it produced better results and reduced training time.
+
+### Factors affecting the results
+
+- Weather forecasts for regional capitals may not fully represent where PV
+  systems are installed within each region.
+- Global tilted irradiance is calculated using the same tilt and azimuth for
+  every region, while real PV systems have different configurations.
+- Installed PV capacity does not account for differences in technology,
+  degradation, or operating efficiency.
+- The previous-year validation month may have a different generation scale from
+  the forecast month because installed capacity and weather conditions change
+  over time. This may affect the selected number of training epochs.
+
+### Possible improvements
+
+- Use more weather locations within each region or weight them according to
+  installed regional PV capacity.
+- Compare other day-ahead weather models available through Open-Meteo.
+- Compare MSE and MAE as training and validation criteria.
+- Compare TabM with other neural networks designed for tabular or time-series
+  data.
+- Continue controlled tests of embedding size, number of frequencies,
+  regularization, batch size, and early stopping.
+- Repeat training when newer generation and weather observations become
+  available.
